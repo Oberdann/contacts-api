@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: contacts-mongodb
+    ports:
+      - '27017:27017'
+    volumes:
+      - contacts_data:/data/db
+
+volumes:
+  contacts_data:

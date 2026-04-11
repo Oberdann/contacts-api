@@ -34,6 +34,8 @@ export class ContactsService implements IContactsService {
   async getById(id: string): Promise<ContactResponseDto> {
     const contact = await this.findContactOrFail(id);
 
+    this.verifyIfAlreadyInactive(id, contact);
+
     const age = this.calculateAge(contact.birthDate);
 
     const response = ContactMapper.toResponseDto(contact, age);
@@ -58,11 +60,7 @@ export class ContactsService implements IContactsService {
   async deactivate(id: string): Promise<void> {
     const contact = await this.findContactOrFail(id);
 
-    if (!contact.isActive) {
-      throw new ContactAlreadyInactiveException(
-        `O contato com ID ${id} já está inativo.`,
-      );
-    }
+    this.verifyIfAlreadyInactive(id, contact);
 
     await this.contactModel.updateOne({ _id: id }, { isActive: false });
   }
@@ -107,10 +105,18 @@ export class ContactsService implements IContactsService {
     }
   }
 
+  private verifyIfAlreadyInactive(id: string, contact: Contact) {
+    if (!contact.isActive) {
+      throw new ContactAlreadyInactiveException(
+        `O contato com ID ${id} já está inativo.`,
+      );
+    }
+  }
+
   private async findContactOrFail(id: string): Promise<ContactDocument> {
     const contact = await this.contactModel.findById(id);
 
-    if (!contact || !contact.isActive) {
+    if (!contact) {
       throw new ContactNotFoundException(
         `Contato com ID ${id} não encontrado.`,
       );
